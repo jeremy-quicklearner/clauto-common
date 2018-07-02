@@ -11,3 +11,6 @@ debian/clautod.substvars
 debian/clautod
 debian/debhelper-build-stamp
 debian/files
+
+# IDE stuff
+.idea
