@@ -17,6 +17,12 @@ sudo systemctl stop clautod
 # Copy the clautod source from the repo to the clautod installation directory
 sudo cp -r clautod/* /usr/share/clauto/clautod
 
+# There may have been config changes, so enact config migration
+if ! sudo /usr/share/clauto/clautod/cfgmig/cfgmig.sh ; then
+    echo "[deplocal] Config migration failure detected. Exiting without restarting clautod"
+    exit 1
+fi
+
 # There may have been database changes, so enact database migration
 if ! sudo /usr/share/clauto/clautod/dbmig/dbmig.sh ; then
     echo "[deplocal] DB migration failure detected. Exiting without restarting clautod"
