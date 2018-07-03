@@ -228,6 +228,7 @@ def critical(msg, *args, **kwargs):
 
 def config(msg, *args, **kwargs):
     # This function is added dynamically to the Logger class by init()
+    # noinspection PyUnresolvedReferences
     LOGGER.config(msg, *args, **kwargs)
 
 
@@ -249,4 +250,5 @@ def debug(msg, *args, **kwargs):
 
 def verbose(msg, *args, **kwargs):
     # This function is added dynamically to the Logger class by init()
+    # noinspection PyUnresolvedReferences
     LOGGER.verbose(msg, *args, **kwargs)
