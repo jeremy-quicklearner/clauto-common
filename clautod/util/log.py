@@ -10,12 +10,15 @@ import logging
 # Other Python modules
 
 # Clauto modules
-from util import exitcodes
+from util.borg import Borg
 
 # CONSTANTS ############################################################################################################
 
 # Log file name
 LOG_FILENAME = "clautod.log"
+
+# Name of the logger in the Python standard library
+LOGGER_NAME = "clautod"
 
 # Log line format strings
 format_strings = {
@@ -35,9 +38,6 @@ log_level_to_format_string = {
     "VRB": "dev",
     "NUL": "nul"
 }
-
-# Python logger object
-LOGGER = logging.getLogger("clautod")
 
 """
 The magic numbers 9 and 41 fit into the logging library's internal hierarchy in which DEBUG is 10 and CRITICAL is 50:
@@ -76,179 +76,183 @@ clautod_log_level_string_to_log_level = {
     "NUL": logging.NOTSET
 }
 
-
-# STATE ################################################################################################################
-
-# Whether the logging is initialized or not
-is_initialized = False
-
-# Handler object enabling logging to the current log file
-handler = None
-
-# HELPERS ##############################################################################################################
+# Extensions to the Python standard library's logger object
 
 
-class ClautodFormatter(logging.Formatter):
+# This will be what gets called as "logger.config"
+def logger_dot_config(self, message, *args, **kws):
+    if self.isEnabledFor(CUSTOM_LOGLEVEL_CONFIG):
+        self._log(CUSTOM_LOGLEVEL_CONFIG, message, args, **kws)
+
+
+# This will be what gets called as "logger.verbose"
+def logger_dot_verbose(self, message, *args, **kws):
+    if self.isEnabledFor(CUSTOM_LOGLEVEL_VERBOSE):
+        self._log(CUSTOM_LOGLEVEL_VERBOSE, message, args, **kws)
+
+
+# CLASSES ##############################################################################################################
+
+class NoLogDirException(Exception):
+    pass
+
+
+class LogFileUnwriteableException(Exception):
+    pass
+
+
+class Log(Borg):
     """
-    Each line in the clautod log has a different format based on its log level, and some of those formats
-    contain tags giving the position in source where the event happened. This is done using a custom
-    Formatter subclass
+    This class wraps a logger object from Python's standard library, so that it produces the clautod log format and
+    provides config and verbose log levels
     """
 
-    def format(self, record):
+    # "PRIVATE" ########################################################################################################
+
+    class ClautodFormatter(logging.Formatter):
         """
-        Format a log line
-        :param record: The log event object
-        :return: The formatted log line (A string)
+        Each line in the clautod log has a different format based on its log level, and some of those formats
+        contain tags giving the position in source where the event happened. This is done using a custom
+        Formatter subclass
         """
 
-        # Format the time
-        self.datefmt = "%Y-%m-%d %H:%M:%S"
+        def format(self, record):
+            """
+            Format a log line
+            :param record: The log event object
+            :return: The formatted log line (A string)
+            """
 
-        # Pick which format string to use
-        format_string = format_strings[
-            log_level_to_format_string[
-                log_level_to_clautod_log_level_string[record.levelno]
+            # Format the time
+            self.datefmt = "%Y-%m-%d %H:%M:%S"
+
+            # Pick which format string to use
+            format_string = format_strings[
+                log_level_to_format_string[
+                    log_level_to_clautod_log_level_string[record.levelno]
+                ]
             ]
-        ]
 
+            """
+            Evaluate the custom format specifiers in the format string. This is a crude method of evaluation
+            that prevents any future format string from containing the actual characters in any format specifier...
+            but I doubt anyone will ever want those characters in there
+            """
+            format_string = format_string \
+                .replace("%(clautod_levelname)s", log_level_to_clautod_log_level_string[record.levelno]) \
+                .replace("%(clautod_module)s", record.pathname.replace("/usr/share/clauto/clautod/", ""))
+
+            # Backup the current format in case someone else is using the same logger
+            original_format = self._style._fmt
+
+            # Set the format
+            self._style._fmt = format_string
+
+            # Delegate the rest of the formatting to the superclass
+            log_line = super().format(record)
+
+            # Restore the original format
+            self._style._fmt = original_format
+
+            # The log line is formatted
+            return log_line
+
+    # "PUBLIC" #########################################################################################################
+
+    def __init__(self, log_dir=None):
         """
-        Evaluate the custom format specifiers in the format string. This is a crude method of evaluation
-        that prevents any future format string from containing the actual characters in any format specifier...
-        but I doubt anyone will ever want those characters in there
+        This function prepares a logger object to produce the clautod log
+        :param log_dir: The path to the directory where the log file will go
         """
-        format_string = format_string \
-            .replace("%(clautod_levelname)s", log_level_to_clautod_log_level_string[record.levelno]) \
-            .replace("%(clautod_module)s", record.pathname.replace("/usr/share/clauto/clautod/", ""))
 
-        # Backup the current format in case someone else is using the same logger
-        original_format = self._style._fmt
+        Borg.__init__(self)
 
-        # Set the format
-        self._style._fmt = format_string
+        # If the state is already initialized, just set the log directory
+        if hasattr(self, "handler"):
+            if log_dir:
+                self.log_dir_set(log_dir)
+            return
 
-        # Delegate the rest of the formatting to the superclass
-        log_line = super().format(record)
+        # The state isn't already initialized. A log directory must be supplied.
+        if not log_dir:
+            raise NoLogDirException
 
-        # Restore the original format
-        self._style._fmt = original_format
+        # This is initialization
+        self.handler = None
 
-        # The log line is formatted
-        return log_line
+        # Add the config and verbose log levels to the logging library's internal list
+        logging.addLevelName(CUSTOM_LOGLEVEL_CONFIG, "CONFIG")
+        logging.addLevelName(CUSTOM_LOGLEVEL_VERBOSE, "VERBOSE")
 
-# "EXPOSED" ############################################################################################################
+        # Add the functions to the Logger class
+        logging.Logger.config = logger_dot_config
+        logging.Logger.verbose = logger_dot_verbose
 
+        # Obtain the logger from the Python logging library
+        self.logger = logging.getLogger(LOGGER_NAME)
 
-def init(log_dir):
-    """
-    This function prepares a logger object to produce the clautod log
-    :param log_dir: The path to the directory where the log file will go
-    """
+        # Set the log directory
+        self.log_dir_set(log_dir)
 
-    # Set the log file
-    log_dir_set(log_dir)
+        self.debug("Logging initialized")
 
-    # Add the config and verbose log levels to the logging library's internal list
-    logging.addLevelName(CUSTOM_LOGLEVEL_CONFIG, "CONFIG")
-    logging.addLevelName(CUSTOM_LOGLEVEL_VERBOSE, "VERBOSE")
+    def log_dir_set(self, new_log_dir):
+        """
+        Changes the directory where the log file goes
+        :param new_log_dir: Path to the new log directory
+        """
 
-    # This will be what gets called as "logger.config"
-    def logger_dot_config(self, message, *args, **kws):
-        if self.isEnabledFor(CUSTOM_LOGLEVEL_CONFIG):
-            self._log(CUSTOM_LOGLEVEL_CONFIG, message, args, **kws)
+        # First, confirm the new log file is writable
+        try:
+            # Using w+ ensures that open() will create the file if it doesn't already exist
+            open(new_log_dir + "/" + LOG_FILENAME, "w+").close()
+        except IOError:
+            raise LogFileUnwriteableException()
 
-    # This will be what gets called as "logger.verbose"
-    def logger_dot_verbose(self, message, *args, **kws):
-        if self.isEnabledFor(CUSTOM_LOGLEVEL_VERBOSE):
-            self._log(CUSTOM_LOGLEVEL_VERBOSE, message, args, **kws)
+        # If this isn't the first time, the logger already has a handler applied. So remove it and close the stream
+        if self.handler:
+            self.logger.removeHandler(self.handler)
+            self.handler.stream.close()
 
-    # Add the functions to the Logger class
-    logging.Logger.verbose = logger_dot_verbose
-    logging.Logger.config = logger_dot_config
+        # Create a handler for the new log file and apply a new instance of the custom formatter to it
+        self.handler = logging.StreamHandler(open(new_log_dir + "/" + LOG_FILENAME, "w+"))
+        formatter = self.ClautodFormatter()
+        self.handler.setFormatter(formatter)
 
-    # The logging is now initialized
-    global is_initialized
-    is_initialized = True
+        # Get the log object and add the handler with the custom formatter
+        self.logger.addHandler(self.handler)
 
-    debug("Logging initialized")
+    # Some wrapper functions for easy access to logging
 
+    def level_set(self, new_level):
+        """
+        Sets the log level
+        :param new_level: The new log level. One of CRT, CFG, ERR, WRN, INF, DBG, VRB
+        :return:
+        """
+        self.logger.setLevel(clautod_log_level_string_to_log_level[new_level])
 
-def log_dir_set(new_log_dir):
-    """
-    Changes the directory where the log file goes
-    :param new_log_dir: Path to the new log directory
-    """
+    def critical(self, msg, *args, **kwargs):
+        self.logger.critical(msg, *args, **kwargs)
 
-    # First, confirm the new log file is writable
-    try:
-        # Using w+ ensures that open() will create the file if it doesn't already exist
-        open(new_log_dir + "/" + LOG_FILENAME, "w+").close()
-    except IOError:
-        exit(exitcodes.LOG_FILE_UNWRITEABLE_ERROR)
+    def config(self, msg, *args, **kwargs):
+        # This function is added dynamically to the Logger class by init()
+        # noinspection PyUnresolvedReferences
+        self.logger.config(msg, *args, **kwargs)
 
-    # If logging is initialized, the logger already has a handler applied. So remove it and close the stream
-    global handler
-    if is_initialized:
-        LOGGER.removeHandler(handler)
-        handler.stream.close()
+    def error(self, msg, *args, **kwargs):
+        self.logger.error(msg, *args, **kwargs)
 
-    # Create a handler for the new log file and apply a new instance of the custom formatter to it
-    handler = logging.StreamHandler(open(new_log_dir + "/" + LOG_FILENAME, "w+"))
-    handler.setFormatter(ClautodFormatter())
+    def warning(self, msg, *args, **kwargs):
+        self.logger.warning(msg, *args, **kwargs)
 
-    # Get the log object and add the handler with the custom formatter
-    LOGGER.addHandler(handler)
+    def info(self, msg, *args, **kwargs):
+        self.logger.info(msg, *args, **kwargs)
 
+    def debug(self, msg, *args, **kwargs):
+        self.logger.debug(msg, *args, **kwargs)
 
-def cleanup():
-    """
-    Actions to be performed when clautod is terminated
-    """
-
-    # If logging is initialized, the logger has a custom formatter applied. So remove it
-    global handler
-    if is_initialized:
-        LOGGER.removeHandler(handler)
-
-# Some wrapper functions for easy access to logging
-
-
-def level_set(new_level):
-    """
-    Sets the log level
-    :param new_level: The new log level. One of CRT, CFG, ERR, WRN, INF, DBG, VRB
-    :return:
-    """
-    LOGGER.setLevel(clautod_log_level_string_to_log_level[new_level])
-
-
-def critical(msg, *args, **kwargs):
-    LOGGER.critical(msg, *args, **kwargs)
-
-
-def config(msg, *args, **kwargs):
-    # This function is added dynamically to the Logger class by init()
-    # noinspection PyUnresolvedReferences
-    LOGGER.config(msg, *args, **kwargs)
-
-
-def error(msg, *args, **kwargs):
-    LOGGER.error(msg, *args, **kwargs)
-
-
-def warning(msg, *args, **kwargs):
-    LOGGER.warning(msg, *args, **kwargs)
-
-
-def info(msg, *args, **kwargs):
-    LOGGER.info(msg, *args, **kwargs)
-
-
-def debug(msg, *args, **kwargs):
-    LOGGER.debug(msg, *args, **kwargs)
-
-
-def verbose(msg, *args, **kwargs):
-    # This function is added dynamically to the Logger class by init()
-    # noinspection PyUnresolvedReferences
-    LOGGER.verbose(msg, *args, **kwargs)
+    def verbose(self, msg, *args, **kwargs):
+        # This function is added dynamically to the Logger class by init()
+        # noinspection PyUnresolvedReferences
+        self.logger.verbose(msg, *args, **kwargs)
