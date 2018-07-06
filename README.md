@@ -1,4 +1,4 @@
 # clautod
-## Consumables-Listing AUTOmation Daemon
+## Consumables-Listing AUTOmation Common Code
 
 A home inventory tracker

@@ -1,0 +1,15 @@
+#!/bin/sh
+set -e
+
+# Automatically added by dh_installinit
+if [ -x "/etc/init.d/clautod" ]; then
+	invoke-rc.d clautod stop || exit $?
+fi
+# End automatically added section
+
+
+# Before uninstalling, stop the clautod service
+systemctl stop clautod || true
+
+# Also stop systemd from trying to run the clautod service on system startup
+systemctl disable clautod || true

@@ -2,13 +2,13 @@
 debian/README.debian
 debian/README.source
 debian/changelog
-debian/clautod.debhelper.log
-debian/clautod.preinst.debhelper
-debian/clautod.postinst.debhelper
-debian/clautod.prerm.debhelper
-debian/clautod.postrm.debhelper
-debian/clautod.substvars
-debian/clautod
+debian/clauto-common.debhelper.log
+debian/clauto-common.preinst.debhelper
+debian/clauto-common.postinst.debhelper
+debian/clauto-common.prerm.debhelper
+debian/clauto-common.postrm.debhelper
+debian/clauto-common.substvars
+debian/clauto-common
 debian/debhelper-build-stamp
 debian/files
 
