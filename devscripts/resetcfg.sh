@@ -20,7 +20,7 @@ sudo rm -f /etc/clauto/$1/$1.cfg
 
 # Enact config migration to rebuild the config
 echo "[resetcfg] Config deleted. Enacting config migration..."
-sudo "TODO: Figure out the path for cfgmig" #/usr/share/clauto/clautod/cfgmig/cfgmig.sh
+sudo /usr/share/clauto/clauto-common/sh/cfgmig.sh $1
 
 # Bring up the Clauto service instance
 echo "[resetcfg] Config migration complete. Starting $1..."

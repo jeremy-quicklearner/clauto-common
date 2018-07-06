@@ -1,1 +1,1 @@
-sh/* /usr/share/clauto/clauto-common/sh
+clauto-common/sh/* /usr/share/clauto/clauto-common/sh
