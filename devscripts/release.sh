@@ -80,7 +80,7 @@ git push origin master
 
 # Cleanup
 echo "[release] Committed and pushed. Cleaning up..."
-cd ../clauto-common
+cd ../../clauto-common
 rm clauto-common-version.txt
 
 # clauto-common is released!
