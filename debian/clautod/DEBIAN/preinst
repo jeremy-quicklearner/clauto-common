@@ -1,7 +1,0 @@
-#!/bin/sh
-set -e
-
-
-
-#Before installing, stop the clautod service in case it's already running
-systemctl stop clautod || true
