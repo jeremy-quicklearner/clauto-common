@@ -1,18 +1,18 @@
 #!/bin/bash
 
-# This script compares an existing clautod.conf
+# This script compares an existing Clauto module config
 # file to a cfgtemplate.txt file and updates
-# the clautod.cfg with every setting from
+# the Clauto module config with every setting from
 # template.cfg that it doesn't have yet
 
-CFG_FILE=/etc/clauto/clautod/clautod.cfg
-TEMPLATE_FILE=/usr/share/clauto/clautod/cfgmig/template.cfg
+CFG_FILE=/etc/clauto/$1/$1.cfg
+TEMPLATE_FILE=/usr/share/clauto/$1/cfgmig/template.cfg
 
 # If the config file doesn't exist, create a blank one
 if [ ! -f $CFG_FILE ] ; then
     touch $CFG_FILE
-    echo "# Configuration file for clautod" > $CFG_FILE
-    echo "[cfgmig] Created clautod.cfg"
+    echo "# Configuration file for $1" > $CFG_FILE
+    echo "[cfgmig] Created $1.cfg"
 fi
 
 # Prepare a flag to determine whether to inform the user of changes
@@ -29,7 +29,7 @@ echo "$(cat $TEMPLATE_FILE)" | ( while read line ; do
         # Pull out the key
         key=$(echo "$line" | sed -r -e 's/=.*$//g')
 
-        # If the key isn't in clautod.cfg, then add the line
+        # If the key isn't in the Clauto module config, then add the line
         if [ "$(cat $CFG_FILE | egrep ^\\s*$key\\s*=.*$)" == "" ] ; then
             echo $line >> $CFG_FILE
             cfg_changed=1

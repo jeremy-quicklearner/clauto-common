@@ -1,6 +1,6 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: clautod
-Source: https://github.com/jeremy-quicklearner/clautod
+Upstream-Name: clauto-common
+Source: https://github.com/jeremy-quicklearner/clauto-common
 
 Files: debian/*
 Copyright: 2018 Jeremy Lerner <jeremy.cpsc.questions@gmail.com>
