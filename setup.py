@@ -27,7 +27,7 @@ if not re.match(r"^[0-9]+\.[0-9]+\.[0-9]+$", lines[0]):
 clauto_common_version = lines[0]
 
 setuptools.setup(
-    name="clauto-common",
+    name="clauto_common",
     version=clauto_common_version,
     author="Jeremy Lerner",
     author_email="jeremy.cpsc.questions@gmail.com",
