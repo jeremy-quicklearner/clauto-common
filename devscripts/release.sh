@@ -62,7 +62,7 @@ sudo reprepro -b /var/www/repos/apt/debian includedeb stretch ../clauto-common_$
 # Move all the build artefacts to the clauto-releases repo
 echo "[release] Package published. Moving artefacts to clauto-releases Git repo"
 
-mkdir -p ../clauto-releases/clautod_$1
+mkdir -p ../clauto-releases/clauto-common_$1
 mv ../clauto-common_$1_all.deb         ../clauto-releases/clauto-common_$1
 mv ../clauto-common_$1_amd64.buildinfo ../clauto-releases/clauto-common_$1
 mv ../clauto-common_$1_amd64.changes   ../clauto-releases/clauto-common_$1
