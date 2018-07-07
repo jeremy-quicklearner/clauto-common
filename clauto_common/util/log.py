@@ -5,20 +5,15 @@ Logging-related utilities
 # IMPORTS ##############################################################################################################
 
 # Standard Python modules
+import re
 import logging
 
 # Other Python modules
 
-# Clauto modules
-from util.borg import Borg
+# Clauto Common Python modules
+from clauto_common.patterns.borg import Borg
 
 # CONSTANTS ############################################################################################################
-
-# Log file name
-LOG_FILENAME = "clautod.log"
-
-# Name of the logger in the Python standard library
-LOGGER_NAME = "clautod"
 
 # Log line format strings
 format_strings = {
@@ -140,7 +135,10 @@ class Log(Borg):
             """
             format_string = format_string \
                 .replace("%(clautod_levelname)s", log_level_to_clautod_log_level_string[record.levelno]) \
-                .replace("%(clautod_module)s", record.pathname.replace("/usr/share/clauto/clautod/", ""))
+                .replace("%(clautod_module)s", record.pathname
+                         .replace("/usr/share/clauto/", "")
+                         .replace("/opt/venvs/clauto-common/lib/python3.5/site-packages/", "")
+                         )
 
             # Backup the current format in case someone else is using the same logger
             original_format = self._style._fmt
@@ -159,7 +157,7 @@ class Log(Borg):
 
     # "PUBLIC" #########################################################################################################
 
-    def __init__(self, log_dir=None):
+    def __init__(self, clauto_module=None, log_dir=None):
         """
         This function prepares a logger object to produce the clautod log
         :param log_dir: The path to the directory where the log file will go
@@ -168,7 +166,7 @@ class Log(Borg):
         Borg.__init__(self)
 
         # If the state is already initialized, just set the log directory
-        if hasattr(self, "handler"):
+        if hasattr(self, "clauto_module"):
             if log_dir:
                 self.log_dir_set(log_dir)
             return
@@ -178,6 +176,7 @@ class Log(Borg):
             raise NoLogDirException
 
         # This is initialization
+        self.clauto_module = clauto_module
         self.handler = None
 
         # Add the config and verbose log levels to the logging library's internal list
@@ -189,10 +188,21 @@ class Log(Borg):
         logging.Logger.verbose = logger_dot_verbose
 
         # Obtain the logger from the Python logging library
-        self.logger = logging.getLogger(LOGGER_NAME)
+        self.logger = logging.getLogger(clauto_module)
 
         # Set the log directory
         self.log_dir_set(log_dir)
+
+        # Expose the logger's functions
+        # They can't just be wrapped, or else record.pathname would point to this file
+        self.critical = self.logger.critical
+        self.config = self.logger.config
+        self.error = self.logger.error
+        self.warning = self.logger.warning
+        self.info = self.logger.info
+        self.debug = self.logger.debug
+        self.verbose = self.logger.verbose
+
 
         self.debug("Logging initialized")
 
@@ -205,7 +215,7 @@ class Log(Borg):
         # First, confirm the new log file is writable
         try:
             # Using w+ ensures that open() will create the file if it doesn't already exist
-            open(new_log_dir + "/" + LOG_FILENAME, "w+").close()
+            open(new_log_dir + "/" + self.clauto_module + ".log", "w+").close()
         except IOError:
             raise LogFileUnwriteableException()
 
@@ -215,7 +225,7 @@ class Log(Borg):
             self.handler.stream.close()
 
         # Create a handler for the new log file and apply a new instance of the custom formatter to it
-        self.handler = logging.StreamHandler(open(new_log_dir + "/" + LOG_FILENAME, "w+"))
+        self.handler = logging.StreamHandler(open(new_log_dir + "/" + self.clauto_module + ".log", "w+"))
         formatter = self.ClautodFormatter()
         self.handler.setFormatter(formatter)
 
@@ -231,28 +241,3 @@ class Log(Borg):
         :return:
         """
         self.logger.setLevel(clautod_log_level_string_to_log_level[new_level])
-
-    def critical(self, msg, *args, **kwargs):
-        self.logger.critical(msg, *args, **kwargs)
-
-    def config(self, msg, *args, **kwargs):
-        # This function is added dynamically to the Logger class by init()
-        # noinspection PyUnresolvedReferences
-        self.logger.config(msg, *args, **kwargs)
-
-    def error(self, msg, *args, **kwargs):
-        self.logger.error(msg, *args, **kwargs)
-
-    def warning(self, msg, *args, **kwargs):
-        self.logger.warning(msg, *args, **kwargs)
-
-    def info(self, msg, *args, **kwargs):
-        self.logger.info(msg, *args, **kwargs)
-
-    def debug(self, msg, *args, **kwargs):
-        self.logger.debug(msg, *args, **kwargs)
-
-    def verbose(self, msg, *args, **kwargs):
-        # This function is added dynamically to the Logger class by init()
-        # noinspection PyUnresolvedReferences
-        self.logger.verbose(msg, *args, **kwargs)
