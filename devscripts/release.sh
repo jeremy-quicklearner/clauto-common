@@ -60,8 +60,8 @@ echo "[release] Commit tagged. Publishing to local Debian repo..."
 # Add the new package to the local repo
 sudo reprepro -b /var/www/repos/apt/debian includedeb stretch ../clauto-common_$1_all.deb
 
-# Move all the build artefacts to the clauto-releases repo
-echo "[release] Package published. Moving artefacts to clauto-releases Git repo"
+# Move all the build artifacts to the clauto-releases repo
+echo "[release] Package published. Moving artifacts to clauto-releases Git repo"
 
 mkdir -p ../clauto-releases/clauto-common_$1
 mv ../clauto-common_$1_all.deb         ../clauto-releases/clauto-common_$1
@@ -71,7 +71,7 @@ mv ../clauto-common_$1.dsc             ../clauto-releases/clauto-common_$1
 mv ../clauto-common_$1.tar.xz          ../clauto-releases/clauto-common_$1
 
 # Commit and push to clauto-releases
-echo "[release] Artefacts moved. Committing and pushing..."
+echo "[release] Artifacts moved. Committing and pushing..."
 
 cd ../clauto-releases/clauto-common_$1
 git add .
