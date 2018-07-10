@@ -4,16 +4,16 @@ CFG_FILE=/etc/clauto/$1/$1.cfg
 CFG_KEY_LOG_DIR=log_dir
 
 # First, determine the log's location by reading the config file. Filter out the line with the log's location
-log_dir=$(cat $CFG_FILE | egrep ^\\s*$CFG_KEY_LOG_DIR\\s*=.*$)
+log_dir=$(cat ${CFG_FILE} | egrep ^\\s*${CFG_KEY_LOG_DIR}\\s*=.*$)
 
 # Trim off the key and '=' character
-log_dir=$(echo $log_dir | sed -r -e 's/.*=\s*//g')
+log_dir=$(echo ${log_dir} | sed -r -e 's/.*=\s*//g')
 
 # Trim off any trailing whitespace or comment
-log_dir=$(echo $log_dir | sed -r -e 's/\s*(#.*)?//g')
+log_dir=$(echo ${log_dir} | sed -r -e 's/\s*(#.*)?//g')
 
 # Now the absolute path of the database is known
-log_file=$log_dir/$1.log
+log_file=${log_dir}/$1.log
 
 # Set up an escape character for sed
 esc=$(printf '\033')
@@ -22,7 +22,7 @@ esc=$(printf '\033')
 # This incredibly ugly pile of regex and ANSI escape characters is here and not in Python because the actual log
 # file should be straightforward uncoloured ASCII - not something weird and colourful that might trip up parsers
 # Also, I'm sorry to anyone who ever feels the need to edit this
-unbuffer tail -f $log_file | sed "
+unbuffer tail -f ${log_file} | sed "
      s/\[CRT\].*/${esc}[31m\0${esc}[39m/g;
      s/\[CFG\]/${esc}[36;1m\0${esc}[39;0m/g;
      s/\[ERR\].*/${esc}[33;1m\0${esc}[39;0m/g;

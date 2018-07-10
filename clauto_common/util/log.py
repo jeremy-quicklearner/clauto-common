@@ -5,8 +5,8 @@ Logging-related utilities
 # IMPORTS ##############################################################################################################
 
 # Standard Python modules
-import re
 import logging
+import sys
 
 # Other Python modules
 
@@ -88,10 +88,6 @@ def logger_dot_verbose(self, message, *args, **kws):
 
 # CLASSES ##############################################################################################################
 
-class NoLogDirException(Exception):
-    pass
-
-
 class LogFileUnwriteableException(Exception):
     pass
 
@@ -157,27 +153,54 @@ class Log(Borg):
 
     # "PUBLIC" #########################################################################################################
 
-    def __init__(self, clauto_module=None, log_dir=None):
+    def __init__(self, clauto_module="clauto-common", log_dir=None):
         """
         This function prepares a logger object to produce the clautod log
         :param log_dir: The path to the directory where the log file will go
         """
-
         Borg.__init__(self)
 
-        # If the state is already initialized, just set the log directory
+        # If the state is already initialized, do nothing
         if hasattr(self, "clauto_module"):
             if log_dir:
-                self.log_dir_set(log_dir)
+                self.debug("Logging is already initialized with dir <%s>. Not setting log dir to <%s>.",
+                           self.log_dir,
+                           log_dir
+                           )
+            if clauto_module != "clauto-common":
+                self.debug("Logging is already initialized with module <%s>. Not setting module to <%s>.",
+                           self.clauto_module,
+                           clauto_module
+                           )
             return
 
-        # The state isn't already initialized. A log directory must be supplied.
+        # If there's no log directory, log to stdout
         if not log_dir:
-            raise NoLogDirException
+            self.log_dir = "STDOUT"
+            self.handler = logging.StreamHandler(sys.stdout)
 
-        # This is initialization
-        self.clauto_module = clauto_module
-        self.handler = None
+        # If the log directory is given, then log to a file in it
+        else:
+            # First, confirm the new log file is writable
+            try:
+                # Using w+ ensures that open() will create the file if it doesn't already exist
+                open(log_dir + "/" + clauto_module + ".log", "w+").close()
+            except IOError:
+                raise LogFileUnwriteableException()
+
+            # Now that the log file is confirmed writable, start initializing
+            self.log_dir = log_dir
+
+            # Create a handler for the new log file
+            self.handler = logging.StreamHandler(open(log_dir + "/" + clauto_module + ".log", "w+"))
+
+        # Now we have a handler, so apply the custom formatter to it
+        formatter = self.ClautodFormatter()
+        self.handler.setFormatter(formatter)
+
+        # Get the log object and add the handler with the custom formatter
+        self.logger = logging.getLogger(clauto_module)
+        self.logger.addHandler(self.handler)
 
         # Add the config and verbose log levels to the logging library's internal list
         logging.addLevelName(CUSTOM_LOGLEVEL_CONFIG, "CONFIG")
@@ -187,50 +210,22 @@ class Log(Borg):
         logging.Logger.config = logger_dot_config
         logging.Logger.verbose = logger_dot_verbose
 
-        # Obtain the logger from the Python logging library
-        self.logger = logging.getLogger(clauto_module)
-
-        # Set the log directory
-        self.log_dir_set(log_dir)
-
         # Expose the logger's functions
-        # They can't just be wrapped, or else record.pathname would point to this file
+        # They can't just be wrapped, or else record.pathname would point to this file (See the custom formatter class)
+        # The config and verbose functions are added dynamically by __init__()
         self.critical = self.logger.critical
+        # noinspection PyUnresolvedReferences
         self.config = self.logger.config
         self.error = self.logger.error
         self.warning = self.logger.warning
         self.info = self.logger.info
         self.debug = self.logger.debug
+        # noinspection PyUnresolvedReferences
         self.verbose = self.logger.verbose
 
-
+        # Initialization is finished
+        self.clauto_module = clauto_module
         self.debug("Logging initialized")
-
-    def log_dir_set(self, new_log_dir):
-        """
-        Changes the directory where the log file goes
-        :param new_log_dir: Path to the new log directory
-        """
-
-        # First, confirm the new log file is writable
-        try:
-            # Using w+ ensures that open() will create the file if it doesn't already exist
-            open(new_log_dir + "/" + self.clauto_module + ".log", "w+").close()
-        except IOError:
-            raise LogFileUnwriteableException()
-
-        # If this isn't the first time, the logger already has a handler applied. So remove it and close the stream
-        if self.handler:
-            self.logger.removeHandler(self.handler)
-            self.handler.stream.close()
-
-        # Create a handler for the new log file and apply a new instance of the custom formatter to it
-        self.handler = logging.StreamHandler(open(new_log_dir + "/" + self.clauto_module + ".log", "w+"))
-        formatter = self.ClautodFormatter()
-        self.handler.setFormatter(formatter)
-
-        # Get the log object and add the handler with the custom formatter
-        self.logger.addHandler(self.handler)
 
     # Some wrapper functions for easy access to logging
 
