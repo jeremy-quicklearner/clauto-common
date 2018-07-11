@@ -11,7 +11,8 @@ import sys
 # Other Python modules
 
 # Clauto Common Python modules
-from clauto_common.patterns.borg import Borg
+from clauto_common.patterns.singleton import Singleton
+from clauto_common.exceptions import LogFileUnwriteableException
 
 # CONSTANTS ############################################################################################################
 
@@ -88,11 +89,7 @@ def logger_dot_verbose(self, message, *args, **kws):
 
 # CLASSES ##############################################################################################################
 
-class LogFileUnwriteableException(Exception):
-    pass
-
-
-class Log(Borg):
+class Log(Singleton):
     """
     This class wraps a logger object from Python's standard library, so that it produces the clautod log format and
     provides config and verbose log levels
@@ -158,20 +155,21 @@ class Log(Borg):
         This function prepares a logger object to produce the clautod log
         :param log_dir: The path to the directory where the log file will go
         """
-        Borg.__init__(self)
 
-        # If the state is already initialized, do nothing
-        if hasattr(self, "clauto_module"):
-            if log_dir:
+        # Singleton instantiation
+        Singleton.__init__(self, __class__)
+        if Singleton.is_initialized(__class__):
+            if log_dir and log_dir != self.log_dir:
                 self.debug("Logging is already initialized with dir <%s>. Not setting log dir to <%s>.",
                            self.log_dir,
                            log_dir
                            )
-            if clauto_module != "clauto-common":
+            if clauto_module != "clauto-common" and clauto_module != self.clauto_module:
                 self.debug("Logging is already initialized with module <%s>. Not setting module to <%s>.",
                            self.clauto_module,
                            clauto_module
                            )
+
             return
 
         # If there's no log directory, log to stdout
@@ -223,9 +221,12 @@ class Log(Borg):
         # noinspection PyUnresolvedReferences
         self.verbose = self.logger.verbose
 
+        # The initial level is INF
+        self.level_set("INF")
+
         # Initialization is finished
         self.clauto_module = clauto_module
-        self.debug("Logging initialized")
+        self.info("Logging initialized")
 
     # Some wrapper functions for easy access to logging
 
