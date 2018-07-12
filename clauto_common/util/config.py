@@ -10,13 +10,20 @@ Utilities related to config files
 import configargparse
 
 # Clauto Common Python modules
-from clauto_common.patterns.singleton import Singleton
-from clauto_common.util.log import Log
-from clauto_common.exceptions import ClautodAlreadyInstantiatedException
-from clauto_common.exceptions import exception_to_exit_code
-from clauto_common.exceptions import EXIT_ERROR
+from ..exceptions import ConfigFileUnreadableException
 
 # CONSTANTS ############################################################################################################
 
 # FUNCTIONS ############################################################################################################
 
+def config_read(filename):
+    """
+    Parse a config file
+    :param filename: The filename of the config file
+    :return: A dict containing every key/value pair in the config file
+    """
+    try:
+        with open(filename, "r") as config_file:
+            return configargparse.DefaultConfigFileParser().parse(config_file)
+    except IOError:
+        raise ConfigFileUnreadableException
