@@ -3,6 +3,7 @@
 # subclass, but they all share the same state
 # (not across different subclasses)
 
+
 class Singleton:
     """
     Superclass for Singletons. To make a singleton,
@@ -25,6 +26,7 @@ class Singleton:
         # The new instance's state must be shared with other instances
         self.__dict__ = self._states[subclass]
 
+    @staticmethod
     def is_initialized(subclass):
         """
         Returns true if a Singleton subclass has already been initialized

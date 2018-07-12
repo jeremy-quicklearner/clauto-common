@@ -184,7 +184,7 @@ class Log(Singleton):
                 # Using w+ ensures that open() will create the file if it doesn't already exist
                 open(log_dir + "/" + clauto_module + ".log", "w+").close()
             except IOError:
-                raise LogFileUnwriteableException()
+                raise LogFileUnwriteableException(log_dir + "/" + clauto_module + ".log")
 
             # Now that the log file is confirmed writable, start initializing
             self.log_dir = log_dir
