@@ -18,9 +18,9 @@ from clauto_common.exceptions import LogFileUnwriteableException
 
 # Log line format strings
 format_strings = {
-    "user": "[%(asctime)s.%(msecs)d][%(clautod_levelname)s] %(message)s",
-    "dev": "[%(asctime)s.%(msecs)d][%(clautod_levelname)s][%(clautod_module)s:%(lineno)d] %(message)s",
-    "nul": "[%(asctime)s.%(msecs)d][???] %(message)s"
+    "user": "[%(asctime)s.%(msecs)03d][%(clautod_levelname)s] %(message)s",
+    "dev": "[%(asctime)s.%(msecs)03d][%(clautod_levelname)s][%(clautod_module)s:%(lineno)d] %(message)s",
+    "nul": "[%(asctime)s.%(msecs)03d][???] %(message)s"
 }
 
 # Which format string to use for each level
