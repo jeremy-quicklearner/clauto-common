@@ -24,6 +24,12 @@ class ClautodAlreadyInstantiatedException(Exception):
         Exception.__init__(self, *args, **kwargs)
 
 
+class EmptyConfigInstantiationException(Exception):
+    def __init__(self, *args, **kwargs):
+        # noinspection PyArgumentList
+        Exception.__init__(self, *args, **kwargs)
+
+
 class ConfigFileUnreadableException(Exception):
     def __init__(self, *args, **kwargs):
         # noinspection PyArgumentList
@@ -59,6 +65,7 @@ class DatabaseStateException(Exception):
 exception_to_exit_code = {
     LogFileUnwriteableException:         EXIT_ERROR_LOG_FILE_UNWRITEABLE,
     ClautodAlreadyInstantiatedException: EXIT_ERROR,
+    EmptyConfigInstantiationException:   EXIT_ERROR,
     ConfigFileUnreadableException:       EXIT_ERROR_CONFIG_FILE_UNREADABLE,
     ConfigKeyException:                  EXIT_ERROR_CONFIG_SETTING_MISSING,
     NoneException:                       EXIT_ERROR,

@@ -10,7 +10,9 @@ Utilities related to config files
 import configargparse
 
 # Clauto Common Python modules
-from ..exceptions import ConfigFileUnreadableException
+from clauto_common.patterns.singleton import Singleton
+from clauto_common.exceptions import ConfigFileUnreadableException
+from clauto_common.exceptions import EmptyConfigInstantiationException
 from ..exceptions import ConfigKeyException
 
 
@@ -18,9 +20,16 @@ from ..exceptions import ConfigKeyException
 
 # CLASSES ##############################################################################################################
 
-class ClautoConfig:
+class ClautoConfig(Singleton):
 
-    def __init__(self, wrapped_dict):
+    def __init__(self, wrapped_dict=None):
+        # Singleton Initialization
+        Singleton.__init__(self, __class__)
+        if Singleton.is_initialized(__class__):
+            return
+
+        if wrapped_dict is None:
+            raise EmptyConfigInstantiationException()
         self.wrapped_dict = wrapped_dict
 
     def __getitem__(self, key):
