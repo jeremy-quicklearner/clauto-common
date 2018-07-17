@@ -13,27 +13,25 @@ class Singleton:
     # States of all the subclasses
     _states = {}
 
-    def __init__(self, subclass):
+    def __init__(self):
         """
         Constructor for Singleton superclass
-        :param subclass: The name of the subclass being instantiated
         """
 
         # If this is the subclass' first instantiation, register its state
-        if subclass not in Singleton._states:
-            Singleton._states[subclass] = {}
+        if type(self) not in Singleton._states:
+            Singleton._states[type(self)] = {}
 
         # The new instance's state must be shared with other instances
-        self.__dict__ = self._states[subclass]
+        self.__dict__ = self._states[type(self)]
 
     @staticmethod
-    def is_initialized(subclass):
+    def is_initialized(self):
         """
         Returns true if a Singleton subclass has already been initialized
-        :param subclass: The subclass to check
         :return: Whether the subclass has been initialized already
         """
 
         # If the class' state has been registered and isn't empty, then its
         # constructor must have filled in its state previously
-        return (subclass in Singleton._states) and (Singleton._states[subclass])
+        return (type(self) in Singleton._states) and (Singleton._states[type(self)])

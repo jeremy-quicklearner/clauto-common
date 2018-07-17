@@ -28,16 +28,19 @@ class Validator(Singleton):
 
     def __init__(self):
         # Singleton instantiation
-        Singleton.__init__(self, __class__)
-        if Singleton.is_initialized(__class__):
+        Singleton.__init__(self)
+        if Singleton.is_initialized(self):
             return
 
         self.log = Log("clautod")
 
     # noinspection PyMethodMayBeStatic
     def validate_string(self, candidate, can_be_none=False, can_be_empty=False, can_contain_newline=True):
-        if (candidate is None) and (not can_be_none):
-            raise NoneException()
+        if candidate is None:
+            if not can_be_none:
+                raise NoneException()
+            else:
+                return None
         if not isinstance(candidate, str):
             raise TypeError
         if (candidate == "") and (not can_be_empty):

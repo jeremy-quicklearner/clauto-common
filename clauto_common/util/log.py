@@ -157,8 +157,8 @@ class Log(Singleton):
         """
 
         # Singleton instantiation
-        Singleton.__init__(self, __class__)
-        if Singleton.is_initialized(__class__):
+        Singleton.__init__(self)
+        if Singleton.is_initialized(self):
             if log_dir and log_dir != self.log_dir:
                 self.debug("Logging is already initialized with dir <%s>. Not setting log dir to <%s>.",
                            self.log_dir,

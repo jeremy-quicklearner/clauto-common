@@ -24,8 +24,8 @@ class ClautoConfig(Singleton):
 
     def __init__(self, wrapped_dict=None):
         # Singleton Initialization
-        Singleton.__init__(self, __class__)
-        if Singleton.is_initialized(__class__):
+        Singleton.__init__(self)
+        if Singleton.is_initialized(self):
             return
 
         if wrapped_dict is None:

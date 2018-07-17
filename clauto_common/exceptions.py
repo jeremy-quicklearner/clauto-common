@@ -59,6 +59,16 @@ class DatabaseStateException(Exception):
         # noinspection PyArgumentList
         Exception.__init__(self, *args, **kwargs)
 
+class MissingSubjectException(Exception):
+    def __init__(self, *args, **kwargs):
+        # noinspection PyArgumentList
+        Exception.__init__(self, *args, **kwargs)
+
+class InvalidCredentialsException(Exception):
+    def __init__(self, *args, **kwargs):
+        # noinspection PyArgumentList
+        Exception.__init__(self, *args, **kwargs)
+
 
 # MAP FROM EXCEPTION CLASSES TO EXIT CODES #############################################################################
 
@@ -71,6 +81,8 @@ exception_to_exit_code = {
     NoneException:                       EXIT_ERROR,
     ValidationException:                 EXIT_ERROR,
     DatabaseStateException:              EXIT_ERROR,
+    MissingSubjectException:             EXIT_ERROR,
+    InvalidCredentialsException:         EXIT_ERROR,
 
     "default":                           EXIT_ERROR
 }
