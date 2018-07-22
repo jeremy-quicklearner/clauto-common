@@ -50,11 +50,25 @@ class Validator(Singleton):
         return candidate
 
     def validate_username(self, username, can_be_none=False):
-        self.validate_string(username, can_be_none, False, False)
+        try:
+            self.validate_string(username, can_be_none, False, False)
+        except NoneException:
+            raise NoneException("username")
+        except TypeError:
+            raise TypeError("username")
+        except ValidationException:
+            raise ValidationException("username")
         self.log.verbose("Validated username <%s>", username)
         return username
 
     def validate_password(self, password, can_be_none=False):
-        self.validate_string(password, can_be_none, False, False)
+        try:
+            self.validate_string(password, can_be_none, False, False)
+        except NoneException:
+            raise NoneException("password")
+        except TypeError:
+            raise TypeError("password")
+        except ValidationException:
+            raise ValidationException("password")
         self.log.verbose("Validated a password")
         return password

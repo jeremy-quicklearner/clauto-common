@@ -1,0 +1,6 @@
+# Access control conventions for Clauto modules
+
+PRIVILEGE_LEVEL_ADMIN  = 3
+PRIVILEGE_LEVEL_WRITE  = 2
+PRIVILEGE_LEVEL_READ   = 1
+PRIVILEGE_LEVEL_PUBLIC = 0
