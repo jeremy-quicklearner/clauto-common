@@ -13,6 +13,8 @@ Validation-related utilities
 # Clauto Common Python modules
 from clauto_common.patterns.singleton import Singleton
 from clauto_common.util.log import Log
+from clauto_common.access_control import PRIVILEGE_LEVEL_PUBLIC
+from clauto_common.access_control import PRIVILEGE_LEVEL_ADMIN
 from clauto_common.exceptions import NoneException
 from clauto_common.exceptions import ValidationException
 
@@ -42,10 +44,27 @@ class Validator(Singleton):
             else:
                 return None
         if not isinstance(candidate, str):
+            self.log.debug("Expected type <str> but candidate is of type <%s>" % type(candidate))
             raise TypeError
         if (candidate == "") and (not can_be_empty):
             raise ValidationException()
         if ("\n" in candidate) and (not can_contain_newline):
+            raise ValidationException()
+        return candidate
+
+    # noinspection PyMethodMayBeStatic
+    def validate_int(self, candidate, can_be_none=False, min_value=None, max_value=None):
+        if candidate is None:
+            if not can_be_none:
+                raise NoneException()
+            else:
+                return None
+        if not isinstance(candidate, int):
+            self.log.debug("Expected type <int> but candidate is of type <%s>" % type(candidate))
+            raise TypeError
+        if min and candidate < min_value:
+            raise ValidationException()
+        if max and candidate > max_value:
             raise ValidationException()
         return candidate
 
@@ -72,3 +91,15 @@ class Validator(Singleton):
             raise ValidationException("password")
         self.log.verbose("Validated a password")
         return password
+
+    def validate_privilege_level(self, privilege_level, can_be_none=False):
+        try:
+            self.validate_int(privilege_level, can_be_none, PRIVILEGE_LEVEL_PUBLIC, PRIVILEGE_LEVEL_ADMIN)
+        except NoneException:
+            raise NoneException("privilege_level")
+        except TypeError:
+            raise TypeError("privilege_level")
+        except ValidationException:
+            raise ValidationException("privilege_level")
+        self.log.verbose("Validated a privilege level")
+        return privilege_level

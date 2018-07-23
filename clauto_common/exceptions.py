@@ -59,10 +59,12 @@ class DatabaseStateException(Exception):
         # noinspection PyArgumentList
         Exception.__init__(self, *args, **kwargs)
 
+
 class MissingSubjectException(Exception):
     def __init__(self, *args, **kwargs):
         # noinspection PyArgumentList
         Exception.__init__(self, *args, **kwargs)
+
 
 class InvalidCredentialsException(Exception):
     def __init__(self, *args, **kwargs):
@@ -71,7 +73,6 @@ class InvalidCredentialsException(Exception):
 
 
 # MAP FROM EXCEPTION CLASSES TO EXIT CODES #############################################################################
-
 exception_to_exit_code = {
     LogFileUnwriteableException:         EXIT_ERROR_LOG_FILE_UNWRITEABLE,
     ClautodAlreadyInstantiatedException: EXIT_ERROR,
