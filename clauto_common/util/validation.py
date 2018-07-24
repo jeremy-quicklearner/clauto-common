@@ -59,14 +59,18 @@ class Validator(Singleton):
                 raise NoneException()
             else:
                 return None
-        if not isinstance(candidate, int):
-            self.log.debug("Expected type <int> but candidate is of type <%s>" % type(candidate))
+        if not (isinstance(candidate, int) or isinstance(candidate, str)):
+            self.log.debug("Expected type <int or str> but candidate is of type <%s>" % type(candidate))
             raise TypeError
-        if min and candidate < min_value:
+        try:
+            int_candidate = int(candidate)
+        except ValueError:
             raise ValidationException()
-        if max and candidate > max_value:
+        if min and int(candidate) < min_value:
             raise ValidationException()
-        return candidate
+        if max and int(candidate) > max_value:
+            raise ValidationException()
+        return int(candidate)
 
     def validate_username(self, username, can_be_none=False):
         try:
@@ -76,7 +80,8 @@ class Validator(Singleton):
         except TypeError:
             raise TypeError("username")
         except ValidationException:
-            raise ValidationException("username")
+            raise ValidationException("username <%s>" % username)
+
         self.log.verbose("Validated username <%s>", username)
         return username
 
@@ -100,6 +105,10 @@ class Validator(Singleton):
         except TypeError:
             raise TypeError("privilege_level")
         except ValidationException:
-            raise ValidationException("privilege_level")
-        self.log.verbose("Validated a privilege level")
-        return privilege_level
+            raise ValidationException("privilege_level <%s>" % privilege_level)
+        if privilege_level != None:
+            self.log.verbose("Validated privilege level <%d>" % int(privilege_level))
+            return int(privilege_level)
+        else:
+            self.log.verbose("Validated privilege level <None>")
+            return None
