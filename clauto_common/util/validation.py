@@ -66,11 +66,11 @@ class Validator(Singleton):
             int_candidate = int(candidate)
         except ValueError:
             raise ValidationException()
-        if min and int(candidate) < min_value:
+        if min_value and int_candidate < min_value:
             raise ValidationException()
-        if max and int(candidate) > max_value:
+        if max_value and int_candidate > max_value:
             raise ValidationException()
-        return int(candidate)
+        return int_candidate
 
     def validate_username(self, username, can_be_none=False):
         try:
@@ -99,7 +99,12 @@ class Validator(Singleton):
 
     def validate_privilege_level(self, privilege_level, can_be_none=False):
         try:
-            self.validate_int(privilege_level, can_be_none, PRIVILEGE_LEVEL_PUBLIC, PRIVILEGE_LEVEL_ADMIN)
+            int_privilege_level = self.validate_int(
+                privilege_level,
+                can_be_none,
+                PRIVILEGE_LEVEL_PUBLIC,
+                PRIVILEGE_LEVEL_ADMIN
+            )
         except NoneException:
             raise NoneException("privilege_level")
         except TypeError:
@@ -107,8 +112,8 @@ class Validator(Singleton):
         except ValidationException:
             raise ValidationException("privilege_level <%s>" % privilege_level)
         if privilege_level != None:
-            self.log.verbose("Validated privilege level <%d>" % int(privilege_level))
-            return int(privilege_level)
+            self.log.verbose("Validated privilege level <%d>" % int_privilege_level)
+            return int_privilege_level
         else:
             self.log.verbose("Validated privilege level <None>")
             return None
