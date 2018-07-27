@@ -72,6 +72,11 @@ class InvalidCredentialsException(Exception):
         Exception.__init__(self, *args, **kwargs)
 
 
+class IllegalOperationException(Exception):
+    def __init__(self, *args, **kwargs):
+        # noinspection PyArgumentList
+        Exception.__init__(self, *args, **kwargs)
+
 # MAP FROM EXCEPTION CLASSES TO EXIT CODES #############################################################################
 exception_to_exit_code = {
     LogFileUnwriteableException:         EXIT_ERROR_LOG_FILE_UNWRITEABLE,
@@ -84,6 +89,7 @@ exception_to_exit_code = {
     DatabaseStateException:              EXIT_ERROR,
     MissingSubjectException:             EXIT_ERROR,
     InvalidCredentialsException:         EXIT_ERROR,
+    IllegalOperationException:           EXIT_ERROR,
 
     "default":                           EXIT_ERROR
 }
