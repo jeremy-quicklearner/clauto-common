@@ -54,6 +54,12 @@ class ValidationException(Exception):
         Exception.__init__(self, *args, **kwargs)
 
 
+class ConstraintViolation(Exception):
+    def __init__(self, *args, **kwargs):
+        # noinspection PyArgumentList
+        Exception.__init__(self, *args, **kwargs)
+
+
 class DatabaseStateException(Exception):
     def __init__(self, *args, **kwargs):
         # noinspection PyArgumentList
@@ -77,6 +83,7 @@ class IllegalOperationException(Exception):
         # noinspection PyArgumentList
         Exception.__init__(self, *args, **kwargs)
 
+
 # MAP FROM EXCEPTION CLASSES TO EXIT CODES #############################################################################
 exception_to_exit_code = {
     LogFileUnwriteableException:         EXIT_ERROR_LOG_FILE_UNWRITEABLE,
@@ -86,6 +93,7 @@ exception_to_exit_code = {
     ConfigKeyException:                  EXIT_ERROR_CONFIG_SETTING_MISSING,
     NoneException:                       EXIT_ERROR,
     ValidationException:                 EXIT_ERROR,
+    ConstraintViolation:                 EXIT_ERROR,
     DatabaseStateException:              EXIT_ERROR,
     MissingSubjectException:             EXIT_ERROR,
     InvalidCredentialsException:         EXIT_ERROR,

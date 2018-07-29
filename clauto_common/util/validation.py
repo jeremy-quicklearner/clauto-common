@@ -17,6 +17,7 @@ from clauto_common.util.log import Log
 from clauto_common.access_control import PRIVILEGE_LEVEL_PUBLIC
 from clauto_common.access_control import PRIVILEGE_LEVEL_ADMIN
 from clauto_common.exceptions import NoneException
+from clauto_common.exceptions import ConstraintViolation
 from clauto_common.exceptions import ValidationException
 
 
@@ -38,10 +39,29 @@ class Validator(Singleton):
         self.log = Log("clautod")
 
     # noinspection PyMethodMayBeStatic
-    def validate_params(self, params, required_param_names=[], optional_param_names=[]):
+    def verify_not_wildcard(self, candidate, candidate_name=None):
+        if candidate is WILDCARD:
+            self.log.verbose("Unexpected Wildcard for variable with given name <%s>", candidate_name)
+            if candidate_name:
+                raise ConstraintViolation("%s cannot be wildcard" % candidate_name)
+            else:
+                raise ConstraintViolation("Unexpected wildcard")
+
+    # noinspection PyMethodMayBeStatic
+    def verify_is_wildcard(self, candidate, candidate_name=None):
+        if candidate is not WILDCARD:
+            self.log.verbose("Unexpected non-wildcard for variable with given name <%s>", candidate_name)
+            if candidate_name:
+                raise ConstraintViolation("%s must be wildcard" % candidate_name)
+            else:
+                raise ConstraintViolation("Unexpected non-wildcard")
+
+    # noinspection PyMethodMayBeStatic
+    def sanitize_params(self, params, required_param_names=[].copy(), optional_param_names=[].copy()):
         """
-        Will throw ValidationError if a required param is missing, and will convert missing optional params to WILDCARDs
+        Will throw ValidationError if a required param is missing, and will convert missing optional params to WILDCARD
         Any param that isn't in either list will be left behind
+        :param params: Parameters to validate
         :param required_param_names: Array of required parameter names
         :param optional_param_names: Array of optional parameter names
         :return: Sanitized params dict
@@ -61,13 +81,12 @@ class Validator(Singleton):
                 sanitized_params[optional_param] = params[optional_param]
         return sanitized_params
 
-
     # noinspection PyMethodMayBeStatic
     def validate_string(
         self,
         candidate,
         can_be_none=False,
-        can_be_wildcard=False,
+        can_be_wildcard=True,
         can_be_empty=False,
         can_contain_newline=True
     ):
@@ -91,7 +110,7 @@ class Validator(Singleton):
         return candidate
 
     # noinspection PyMethodMayBeStatic
-    def validate_int(self, candidate, can_be_none=False, can_be_wildcard=False,min_value=None, max_value=None):
+    def validate_int(self, candidate, can_be_none=False, can_be_wildcard=True, min_value=None, max_value=None):
         if candidate is None:
             if not can_be_none:
                 raise NoneException()
@@ -115,7 +134,7 @@ class Validator(Singleton):
             raise ValidationException()
         return int_candidate
 
-    def validate_username(self, username, can_be_none=False, can_be_wildcard=False):
+    def validate_username(self, username, can_be_none=False, can_be_wildcard=True):
         try:
             self.validate_string(username, can_be_none, can_be_wildcard, False, False)
         except NoneException:
@@ -128,7 +147,7 @@ class Validator(Singleton):
         self.log.verbose("Validated username <%s>", username)
         return username
 
-    def validate_password(self, password, can_be_none=False, can_be_wildcard=False):
+    def validate_password(self, password, can_be_none=False, can_be_wildcard=True):
         try:
             self.validate_string(password, can_be_none, can_be_wildcard, False, False)
         except NoneException:
@@ -140,7 +159,7 @@ class Validator(Singleton):
         self.log.verbose("Validated a password")
         return password
 
-    def validate_privilege_level(self, privilege_level, can_be_none=False, can_be_wildcard=False):
+    def validate_privilege_level(self, privilege_level, can_be_none=False, can_be_wildcard=True):
         try:
             privilege_level = self.validate_int(
                 privilege_level,
