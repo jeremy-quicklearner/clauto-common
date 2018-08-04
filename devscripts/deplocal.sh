@@ -6,7 +6,7 @@
 
 # Ensure clauto-common is installed
 if [ "$(dpkg-query -W --showformat='${Status}\n' clauto-common | grep 'install ok installed')" == "" ] ; then
-    echo "[deplocal] clauto-common not installed"
+    echo "[clauto-common deplocal] clauto-common not installed"
     exit 1
 fi
 
